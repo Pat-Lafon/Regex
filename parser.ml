@@ -29,8 +29,7 @@ let rec convert_to_regex (acc:regex) str =
       convert_to_regex (And (acc, Char x)) (String.sub str 1 (length-1))
     | '-' -> (* catch cases of a- to avoid crash *)
       convert_to_regex (insert_range acc str.[1]) (String.sub str 1 (length -2))
-    | '|' -> 
-      convert_to_regex (insert_range acc str.[1]) (String.sub str 1 (length -2))
+    | '|' -> failwith "unimplemented"
     | '*' -> failwith "unimplemented"
     | '?' -> failwith "unimplemented"
     | '+' -> failwith "unimplemented"

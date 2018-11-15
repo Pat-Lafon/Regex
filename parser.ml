@@ -1,39 +1,75 @@
+exception Invalid_Regular_Exception
+
 (* epsilon -> Empty
    . -> Any
    a -> Char a
-   a-b -> Range a b
+   a-c -> Or (Char a) (Or (Char b) (Char c))
    ab -> And (Char a) (Char b)
    a|b -> Or (Char a) (Char b)
    a* -> Loop (Char a)
    a? -> Or (Empty) (Char a)
    a+ -> And (Char a) (Loop (Char a))
 *)
-type regex = Empty | Any | Char of char | Range of char * char 
+type regex = Empty | Any | Char of char
            | And of regex * regex  | Or of regex * regex | Loop of regex
 
 let is_char a = Char.code a 
                 |> (fun x -> (x >= 97 && x <= 122) || (x >= 65 && x <= 90))
 
-let insert_range regex char = match regex with
-  | And (reg1, Char (c)) -> And (reg1, Range (c, char))
-  | Or (reg1, Char (c)) -> Or (reg1, Range (c, char))
-  | _ -> failwith "unimplemented"
+let rec regex_to_string (ex:regex) : string = 
+  match ex with 
+  | Empty -> "E'"
+  | Any -> "."
+  | Char x -> Char.escaped x
+  | And (a, b) -> regex_to_string a ^ regex_to_string b
+  | Or (a, b) -> regex_to_string a ^"|"^ regex_to_string b
+  | Loop a -> "("^regex_to_string a^")*"
 
-let rec convert_to_regex (acc:regex) str = 
-  if str = "" then acc 
-  else let length = String.length str in
-    match str.[0] with
-    | '.' -> 
-      convert_to_regex (And (acc, Any)) (String.sub str 1 (length-1))
-    | x when is_char x -> 
-      convert_to_regex (And (acc, Char x)) (String.sub str 1 (length-1))
-    | '-' -> (* catch cases of a- to avoid crash *)
-      convert_to_regex (insert_range acc str.[1]) (String.sub str 1 (length -2))
-    | '|' -> failwith "unimplemented"
-    | '*' -> failwith "unimplemented"
-    | '?' -> failwith "unimplemented"
-    | '+' -> failwith "unimplemented"
-    | '(' ->failwith "unimplemented"
-    | _ -> failwith "unimplemented"
 
-let regex str = convert_to_regex Empty str
+(* Could be switched to char instead of string for op is unneeded. *)
+let rec get_idx (str:string) (op:string) (acc:int): int =
+  if String.length str - acc < String.length op then  -1
+  else if String.sub str acc (String.length op) = op then acc
+  else match str.[acc] with
+    | '(' ->
+      (match get_idx str ")" acc+1 with 
+       | -1 -> raise Invalid_Regular_Exception
+       | x -> get_idx str op x+1)
+    | ')' | ']' -> raise Invalid_Regular_Exception
+    | '[' -> 
+      (match get_idx str "]" acc+1 with 
+       | -1 -> raise Invalid_Regular_Exception
+       | x -> get_idx str op x+1)
+    | '\'' -> get_idx str op acc+2
+    | _ -> get_idx str op acc+1
+
+let rec check_char_after (ex:regex) (str:string) (acc:int) = 
+  match str.[acc] with
+  | exception (Invalid_argument x) -> ex, acc
+  | '*' -> check_char_after (Loop ex) str (acc+1)
+  | '+' -> check_char_after (And (ex, Loop ex)) str (acc+1)
+  | '?' -> check_char_after (Or (Empty, Loop ex)) str (acc+1)
+  | _ -> ex, acc
+
+(* Convert to something with an accumulator for time efficiency? *)
+(* Restructure so I don't need to call get_idx every time possibly some if statement and bool to keep track *)
+let rec convert_to_regex (str:string) (acc:int) = 
+  if acc = String.length str then Empty
+  else 
+    match get_idx str "|" 0 with 
+    | -1 -> let ex, idx = get_next str acc in And (ex, convert_to_regex str idx)
+    | idx -> 
+      Or (convert_to_regex (String.sub str 0 (idx-1)) 0, 
+          convert_to_regex (String.sub str (idx+1) (String.length str-idx-1)) 0)
+and get_next str acc = (* When we get to the point with multiple ops after a char this will fail *)
+  if String.length str - 1 = acc then Char str.[acc], acc+1
+  else match str.[acc] with 
+    | '(' -> let idx = get_idx str ")" 1 in 
+      check_char_after (convert_to_regex (String.sub str 1 (idx-2)) 0) str (idx+1)
+    | '[' -> failwith "unimplemented"
+    | '\\' -> (try let a = str.[acc+1] in Char a, acc+2 
+               with | Invalid_argument x -> raise Invalid_Regular_Exception)
+    | x -> check_char_after (Char x) str (acc+1)
+
+let regex str = convert_to_regex str
+

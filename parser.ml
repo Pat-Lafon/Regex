@@ -32,16 +32,16 @@ let rec get_idx (str:string) (op:string) (acc:int): int =
   else if String.sub str acc (String.length op) = op then acc
   else match str.[acc] with
     | '(' ->
-      (match get_idx str ")" acc+1 with 
+      (match get_idx str ")" (acc+1) with 
        | -1 -> raise Invalid_Regular_Exception
-       | x -> get_idx str op x+1)
+       | x -> get_idx str op (x+1))
     | ')' | ']' -> raise Invalid_Regular_Exception
     | '[' -> 
-      (match get_idx str "]" acc+1 with 
+      (match get_idx str "]" (acc+1) with 
        | -1 -> raise Invalid_Regular_Exception
-       | x -> get_idx str op x+1)
-    | '\'' -> get_idx str op acc+2
-    | _ -> get_idx str op acc+1
+       | x -> get_idx str op (x+1))
+    | '\'' -> get_idx str op (acc+2)
+    | _ -> get_idx str op (acc+1)
 
 let rec check_char_after (ex:regex) (str:string) (acc:int) = 
   match str.[acc] with
@@ -56,10 +56,10 @@ let rec check_char_after (ex:regex) (str:string) (acc:int) =
 let rec convert_to_regex (str:string) (acc:int) = 
   if acc = String.length str then Empty
   else 
-    match get_idx str "|" 0 with 
+    match get_idx str "|" acc with 
     | -1 -> let ex, idx = get_next str acc in And (ex, convert_to_regex str idx)
     | idx -> 
-      Or (convert_to_regex (String.sub str 0 (idx-1)) 0, 
+      Or (convert_to_regex (String.sub str 0 idx) 0, 
           convert_to_regex (String.sub str (idx+1) (String.length str-idx-1)) 0)
 and get_next str acc = (* When we get to the point with multiple ops after a char this will fail *)
   if String.length str - 1 = acc then Char str.[acc], acc+1
@@ -69,7 +69,8 @@ and get_next str acc = (* When we get to the point with multiple ops after a cha
     | '[' -> failwith "unimplemented"
     | '\\' -> (try let a = str.[acc+1] in Char a, acc+2 
                with | Invalid_argument x -> raise Invalid_Regular_Exception)
-    | x -> check_char_after (Char x) str (acc+1)
+    | x -> let ex = (if x = '.' then Any else Char x) in 
+      check_char_after ex str (acc+1)
 
 let regex str = convert_to_regex str 0 
 

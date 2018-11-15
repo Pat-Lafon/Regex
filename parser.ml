@@ -71,5 +71,5 @@ and get_next str acc = (* When we get to the point with multiple ops after a cha
                with | Invalid_argument x -> raise Invalid_Regular_Exception)
     | x -> check_char_after (Char x) str (acc+1)
 
-let regex str = convert_to_regex str
+let regex str = convert_to_regex str 0 
 

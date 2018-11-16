@@ -71,5 +71,17 @@ and get_next str acc =
     | x -> let ex = (if x = '.' then Any else Char x) in 
       check_char_after ex str (acc+1)
 
-let regex str = convert_to_regex str 0 
+let regex (str:string) : regex = convert_to_regex str 0 
+
+let rec regex_lower (regex:regex) : regex = 
+  match regex with
+  | Empty -> Empty
+  | Any -> Any
+  | Char x -> Or (Char (Char.lowercase_ascii x), Char (Char.uppercase_ascii x))
+  | And (x, y) -> And (regex_lower x, regex_lower y)
+  | Or (x, y) -> Or (regex_lower x, regex_lower y)
+  | Loop x -> Loop (regex_lower x)
+
+(* Makes a case-insensitive regex *)
+let regex_case_fold (str:string) : regex = regex str |> regex_lower
 

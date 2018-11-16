@@ -10,20 +10,20 @@ exception Invalid_Regular_Exception
    a? -> Or (Empty) (Char a)
    a+ -> And (Char a) (Loop (Char a))
 *)
-type regex = Empty | Any | Char of char
-           | And of regex * regex  | Or of regex * regex | Loop of regex
+type regexp = Empty | Any | Char of char | And of regexp * regexp 
+            | Or of regexp * regexp | Loop of regexp
 
 let is_char a = Char.code a 
                 |> (fun x -> (x >= 97 && x <= 122) || (x >= 65 && x <= 90))
 
-let rec regex_to_string (ex:regex) : string = 
+let rec regexp_to_string (ex:regexp) : string = 
   match ex with 
   | Empty -> "E'"
   | Any -> "."
   | Char x -> Char.escaped x
-  | And (a, b) -> regex_to_string a ^ regex_to_string b
-  | Or (a, b) -> regex_to_string a ^"|"^ regex_to_string b
-  | Loop a -> "("^regex_to_string a^")*"
+  | And (a, b) -> regexp_to_string a ^ regexp_to_string b
+  | Or (a, b) -> regexp_to_string a ^"|"^ regexp_to_string b
+  | Loop a -> "("^regexp_to_string a^")*"
 
 (* Could be switched to char instead of string for op is unneeded. *)
 let rec get_idx (str:string) (op:string) (acc:int): int =
@@ -42,7 +42,7 @@ let rec get_idx (str:string) (op:string) (acc:int): int =
     | '\'' -> get_idx str op (acc+2)
     | _ -> get_idx str op (acc+1)
 
-let rec check_char_after (ex:regex) (str:string) (acc:int) = 
+let rec check_char_after (ex:regexp) (str:string) (acc:int) = 
   match str.[acc] with
   | exception (Invalid_argument x) -> ex, acc
   | '*' -> check_char_after (Loop ex) str (acc+1)
@@ -51,19 +51,19 @@ let rec check_char_after (ex:regex) (str:string) (acc:int) =
   | _ -> ex, acc
 
 (* Restructure so I don't need to call get_idx every time possibly some if statement and bool to keep track *)
-let rec convert_to_regex (str:string) (acc:int) = 
+let rec convert_to_regexp (str:string) (acc:int) = 
   if acc = String.length str then Empty
   else 
     match get_idx str "|" acc with 
-    | -1 -> let ex, idx = get_next str acc in And (ex, convert_to_regex str idx)
+    | -1 -> let ex, idx = get_next str acc in And (ex, convert_to_regexp str idx)
     | idx -> 
-      Or (convert_to_regex (String.sub str 0 idx) 0, 
-          convert_to_regex (String.sub str (idx+1) (String.length str-idx-1)) 0)
+      Or (convert_to_regexp (String.sub str 0 idx) 0, 
+          convert_to_regexp (String.sub str (idx+1) (String.length str-idx-1)) 0)
 and get_next str acc = 
   if String.length str - 1 = acc then Char str.[acc], acc+1
   else match str.[acc] with 
     | '(' -> let idx = get_idx str ")" 1 in 
-      check_char_after (convert_to_regex (String.sub str 1 (idx-2)) 0) str (idx+1)
+      check_char_after (convert_to_regexp (String.sub str 1 (idx-2)) 0) str (idx+1)
     | '[' -> failwith "unimplemented"
     (* TODO fix *)
     | '\\' -> (try let a = str.[acc+1] in Char a, acc+2 
@@ -71,17 +71,24 @@ and get_next str acc =
     | x -> let ex = (if x = '.' then Any else Char x) in 
       check_char_after ex str (acc+1)
 
-let regex (str:string) : regex = convert_to_regex str 0 
+let regexp (str:string) : regexp = convert_to_regexp str 0 
 
-let rec regex_lower (regex:regex) : regex = 
-  match regex with
+let rec regexp_insensitive (regexp:regexp) : regexp = 
+  match regexp with
   | Empty -> Empty
   | Any -> Any
   | Char x -> Or (Char (Char.lowercase_ascii x), Char (Char.uppercase_ascii x))
-  | And (x, y) -> And (regex_lower x, regex_lower y)
-  | Or (x, y) -> Or (regex_lower x, regex_lower y)
-  | Loop x -> Loop (regex_lower x)
+  | And (x, y) -> And (regexp_insensitive x, regexp_insensitive y)
+  | Or (x, y) -> Or (regexp_insensitive x, regexp_insensitive y)
+  | Loop x -> Loop (regexp_insensitive x)
 
-(* Makes a case-insensitive regex *)
-let regex_case_fold (str:string) : regex = regex str |> regex_lower
+(* Makes a case-insensitive regexp *)
+let regexp_case_fold (str:string) : regexp = regexp str |> regexp_insensitive
+
+let rec regexp_string (str:string) : regexp = 
+  if str = "" then Empty
+  else And (Char str.[0], regexp_string (String.sub str 1 (String.length str-1)))
+
+let regexp_string_case_fold (str:string) : regexp = 
+  regexp_string str |> regexp_insensitive
 

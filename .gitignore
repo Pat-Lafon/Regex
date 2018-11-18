@@ -9,3 +9,4 @@ report
 *.cmx
 *.native
 *.byte
+_build

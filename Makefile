@@ -13,7 +13,7 @@ build:
 test:
 	$(OCAMLBUILD) -tag debug $(TEST) && ./$(TEST)
 
-bisect-test:
+bisect:
 	$(OCAMLBUILD) -package bisect -syntax camlp4o,bisect_pp \
 	  $(TEST) && ./$(TEST) -runner sequential
 

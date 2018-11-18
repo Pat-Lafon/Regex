@@ -61,16 +61,15 @@ let rec convert_to_regexp (str:string) (acc:int) =
       Or (convert_to_regexp (String.sub str 0 idx) 0, 
           convert_to_regexp (String.sub str (idx+1) (String.length str-idx-1)) 0)
 and get_next str acc = 
-  if String.length str - 1 = acc then Char str.[acc], acc+1
-  else match str.[acc] with 
-    | '(' -> let idx = get_idx str ")" 1 in 
-      check_char_after (convert_to_regexp (String.sub str 1 (idx-2)) 0) str (idx+1)
-    | '[' -> failwith "unimplemented"
-    (* TODO fix *)
-    | '\\' -> (try let a = str.[acc+1] in Char a, acc+2 
-               with | Invalid_argument x -> raise Invalid_Regular_Exception)
-    | x -> let ex = (if x = '.' then Any else Char x) in 
-      check_char_after ex str (acc+1)
+  match str.[acc] with 
+  | '(' -> let idx = get_idx str ")" 1 in 
+    check_char_after (convert_to_regexp (String.sub str 1 (idx-2)) 0) str (idx+1)
+  | '[' -> failwith "unimplemented"
+  (* TODO fix *)
+  | '\\' -> (try let a = str.[acc+1] in Char a, acc+2 
+             with | Invalid_argument x -> raise Invalid_Regular_Exception)
+  | '.' -> check_char_after Any str (acc+1)
+  | x -> check_char_after (Char x) str (acc+1)
 
 let regexp (str:string) : regexp = convert_to_regexp str 0 
 

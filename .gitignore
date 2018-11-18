@@ -1,0 +1,11 @@
+# bisect
+report
+
+# ocaml
+*.cmo
+*.cma
+*.cmi
+*.out
+*.cmx
+*.native
+*.byte

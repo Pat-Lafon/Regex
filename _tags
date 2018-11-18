@@ -1,0 +1,1 @@
+true: package(oUnit), package(qcheck), package(bisect), syntax(camlp4o), syntax(bisect_pp)

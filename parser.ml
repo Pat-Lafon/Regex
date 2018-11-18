@@ -92,3 +92,28 @@ let rec regexp_string (str:string) : regexp =
 let regexp_string_case_fold (str:string) : regexp = 
   regexp_string str |> regexp_insensitive
 
+let rec match_helper (ex:regexp) (str:string) (idx:int) : bool * int = 
+  if String.length str = idx then ex = Empty, idx
+  else 
+    match ex with
+    | Empty -> true, idx
+    | Any -> true, if str.[idx] = '\\' then idx + 2 else idx + 1
+    | Char c -> 
+      (try let new_idx = if str.[idx] = '\\' then idx +1 else idx in 
+         if str.[new_idx] = c then true, new_idx+1 else false, idx
+       with 
+       | Invalid_argument x -> raise Invalid_Regular_Exception)
+    | And (x, y) -> 
+      let truth, new_idx = match_helper x str idx in 
+      if truth then match_helper y str new_idx else false, idx
+    | Or (x, y) -> 
+      (match match_helper x str idx, match_helper y str idx with
+       | (true, idx1), (true, idx2) -> true, max idx1 idx2
+       | (true, idx1), _ | _, (true, idx1) -> true, idx1
+       | _, _ -> false, idx)
+    | Loop x -> 
+      let truth, new_idx = match_helper x str idx in
+      if truth then match_helper x str new_idx else true, idx
+
+let string_match (ex:regexp) (str:string) (idx:int) : bool =
+  fst (match_helper ex str idx)

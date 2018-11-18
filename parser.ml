@@ -50,7 +50,8 @@ let rec check_char_after (ex:regexp) (str:string) (acc:int) =
   | '?' -> check_char_after (Or (Empty, Loop ex)) str (acc+1)
   | _ -> ex, acc
 
-(* Restructure so I don't need to call get_idx every time possibly some if statement and bool to keep track *)
+(* Restructure so I don't need to call get_idx every time possibly some if 
+   statement and bool to keep track *)
 let rec convert_to_regexp (str:string) (acc:int) = 
   if acc = String.length str then Empty
   else 

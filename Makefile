@@ -5,7 +5,7 @@ OCAMLBUILD=ocamlbuild -use-ocamlfind
 PKGS=oUnit,qcheck
 
 default: build
-	utop
+	utop -init parser.ml
 
 build:
 	$(OCAMLBUILD) $(OBJECTS)

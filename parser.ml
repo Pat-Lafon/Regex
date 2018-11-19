@@ -13,9 +13,6 @@ exception Invalid_Regular_Exception
 type regexp = Empty | Any | Char of char | And of regexp * regexp 
             | Or of regexp * regexp | Loop of regexp
 
-let is_char a = Char.code a 
-                |> (fun x -> (x >= 97 && x <= 122) || (x >= 65 && x <= 90))
-
 let rec regexp_to_string (ex:regexp) : string = 
   match ex with 
   | Empty -> "E'"

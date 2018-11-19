@@ -60,11 +60,11 @@ let rec convert_to_regexp (str:string) (acc:int) =
 and get_next str acc = 
   match str.[acc] with 
   | '(' -> let idx = get_idx str ")" 1 in 
-    check_char_after (convert_to_regexp (String.sub str 1 (idx-2)) 0) str (idx+1)
+    check_char_after (convert_to_regexp (String.sub str 1 (idx-1)) 0) str (idx+1)
   | '[' -> failwith "unimplemented"
-  (* TODO fix *)
-  | '\\' -> (try let a = str.[acc+1] in Char a, acc+2 
-             with | Invalid_argument x -> raise Invalid_Regular_Exception)
+  (* TODO fix 
+     | '\\' -> (try let a = str.[acc+1] in Char a, acc+2 
+             with | Invalid_argument x -> raise Invalid_Regular_Exception)*)
   | '.' -> check_char_after Any str (acc+1)
   | x -> check_char_after (Char x) str (acc+1)
 
@@ -90,27 +90,28 @@ let regexp_string_case_fold (str:string) : regexp =
   regexp_string str |> regexp_insensitive
 
 let rec match_helper (ex:regexp) (str:string) (idx:int) : bool * int = 
-  if String.length str = idx then ex = Empty, idx
-  else 
-    match ex with
-    | Empty -> true, idx
-    | Any -> true, if str.[idx] = '\\' then idx + 2 else idx + 1
-    | Char c -> 
+  match ex with
+  | Empty -> true, idx
+  | Any -> 
+    if String.length str = idx then false, idx else 
+      true, if str.[idx] = '\\' then idx + 2 else idx + 1
+  | Char c -> 
+    if String.length str = idx then false, idx else
       (try let new_idx = if str.[idx] = '\\' then idx +1 else idx in 
          if str.[new_idx] = c then true, new_idx+1 else false, idx
        with 
        | Invalid_argument x -> raise Invalid_Regular_Exception)
-    | And (x, y) -> 
-      let truth, new_idx = match_helper x str idx in 
-      if truth then match_helper y str new_idx else false, idx
-    | Or (x, y) -> 
-      (match match_helper x str idx, match_helper y str idx with
-       | (true, idx1), (true, idx2) -> true, max idx1 idx2
-       | (true, idx1), _ | _, (true, idx1) -> true, idx1
-       | _, _ -> false, idx)
-    | Loop x -> 
-      let truth, new_idx = match_helper x str idx in
-      if truth then match_helper x str new_idx else true, idx
+  | And (x, y) -> 
+    let truth, new_idx = match_helper x str idx in 
+    if truth then match_helper y str new_idx else false, idx
+  | Or (x, y) -> 
+    (match match_helper x str idx, match_helper y str idx with
+     | (true, idx1), (true, idx2) -> true, max idx1 idx2
+     | (true, idx1), _ | _, (true, idx1) -> true, idx1
+     | _, _ -> false, idx)
+  | Loop x -> 
+    let truth, new_idx = match_helper x str idx in
+    if truth then match_helper x str new_idx else true, idx
 
 let string_match (ex:regexp) (str:string) (idx:int) : bool =
   fst (match_helper ex str idx)

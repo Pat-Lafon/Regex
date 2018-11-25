@@ -68,6 +68,8 @@ and get_next str acc =
   | '.' -> check_char_after Any str (acc+1)
   | x -> check_char_after (Char x) str (acc+1)
 
+
+(* Regular expressions *)
 let regexp (str:string) : regexp = convert_to_regexp str 0 
 
 let rec regexp_insensitive (regexp:regexp) : regexp = 
@@ -97,7 +99,7 @@ let rec match_helper (ex:regexp) (str:string) (idx:int) : bool * int =
       true, if str.[idx] = '\\' then idx + 2 else idx + 1
   | Char c -> 
     if String.length str = idx then false, idx else
-      (try let new_idx = if str.[idx] = '\\' then idx +1 else idx in 
+      (try let new_idx = if str.[idx] = '\\' then idx+1 else idx in 
          if str.[new_idx] = c then true, new_idx+1 else false, idx
        with 
        | Invalid_argument x -> raise Invalid_Regular_Exception)
@@ -111,7 +113,59 @@ let rec match_helper (ex:regexp) (str:string) (idx:int) : bool * int =
      | _, _ -> false, idx)
   | Loop x -> 
     let truth, new_idx = match_helper x str idx in
-    if truth then match_helper x str new_idx else true, idx
+    if truth then let _, new_idx = match_helper (Loop x) str new_idx in true, new_idx 
+    else true, idx
 
+
+(* String matching and searching *)
 let string_match (ex:regexp) (str:string) (idx:int) : bool =
-  fst (match_helper ex str idx)
+  let truth, final_idx = match_helper ex str idx in 
+  if String.length str = final_idx then truth else false
+
+let string_forward (ex:regexp) (str:string) (idx:int) :int = failwith "unimplemented"
+
+let string_backward (ex:regexp) (str:string) (idx:int) :int = failwith "unimplemented"
+
+let string_partial_match (ex:regexp) (str:string) (idx:int) : bool =
+  fst(match_helper ex str idx)
+
+
+(* String replacement *)
+let global_replace (ex:regexp) (old_str:string) (new_string:string) : string =
+  failwith "unimplemented"
+
+let replace_first (ex:regexp) (old_str:string) (new_string:string) : string =
+  failwith "unimplemented"
+
+let global_substitute (ex:regexp) (func:(string -> string)) (str:string) : string =
+  failwith "unimplemented"
+
+let substitute_first (ex:regexp) (func:(string -> string)) (str:string) : string =
+  failwith "unimplemented"
+
+
+(* Splitting strings *)
+let split (ex:regexp) (str:string) : string list = failwith "unimplemented"
+
+let bounded_split (ex:regexp) (str:string) (num:int) : string list = 
+  failwith "unimplemented"
+
+let split_delim (ex:regexp) (str:string) : string list =
+  failwith "unimplemented"
+
+let bounded_split (ex:regexp) (str:string) (num:int) : string list = 
+  failwith "unimplemented"
+
+
+(* Extracting strings *)
+let string_before (str:string) (num:int) : string =
+  failwith "unimplemented"
+
+let string_after (str:string) (num:int) : string = 
+  failwith "unimplemented"
+
+let first_chars (str:string) (num:int) : string = 
+  failwith "unimplemented"
+
+let last_chars (str:string) (num:int) : string = 
+  failwith "unimplemented"

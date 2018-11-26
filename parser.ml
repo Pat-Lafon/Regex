@@ -161,13 +161,13 @@ let bounded_split_delim (ex:regexp) (str:string) (num:int) : string list =
 
 (* Extracting strings *)
 let string_before (str:string) (num:int) : string =
-  failwith "unimplemented"
+  String.sub str 0 num
 
 let string_after (str:string) (num:int) : string = 
-  failwith "unimplemented"
+  String.sub str num (String.length str - num)
 
 let first_chars (str:string) (num:int) : string = 
-  failwith "unimplemented"
+  string_before str num
 
 let last_chars (str:string) (num:int) : string = 
-  failwith "unimplemented"
+  string_after str num

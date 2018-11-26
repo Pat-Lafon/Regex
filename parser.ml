@@ -1,14 +1,14 @@
 exception Invalid_Regular_Exception
 
-(* epsilon -> Empty
-   . -> Any
-   a -> Char a
-   a-c -> Or (Char a) (Or (Char b) (Char c))
-   ab -> And (Char a) (Char b)
-   a|b -> Or (Char a) (Char b)
-   a* -> Loop (Char a)
-   a? -> Or (Empty) (Char a)
-   a+ -> And (Char a) (Loop (Char a))
+(* epsilon ::= Empty
+   . ::= Any
+   a ::= Char a
+   a-c ::= Or (Char a) (Or (Char b) (Char c))
+   ab ::= And (Char a) (Char b)
+   a|b ::= Or (Char a) (Char b)
+   a* ::= Loop (Char a)
+   a? ::= Or (Empty) (Char a)
+   a+ ::= And (Char a) (Loop (Char a))
 *)
 type regexp = Empty | Any | Char of char | And of regexp * regexp 
             | Or of regexp * regexp | Loop of regexp

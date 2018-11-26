@@ -127,9 +127,17 @@ let string_match (ex:regexp) (str:string) (idx:int) : bool =
 let string_partial_match (ex:regexp) (str:string) (idx:int) : bool =
   fst(match_helper ex str idx)
 
-let search_forward (ex:regexp) (str:string) (idx:int) : int = failwith "unimplemented"
+let rec search_forward (ex:regexp) (str:string) (idx:int) : int = 
+  match string_partial_match ex str idx with
+  | true -> idx
+  | false -> if String.length str >= idx then raise Not_found 
+    else search_forward ex str (idx+1)
 
-let search_backward (ex:regexp) (str:string) (idx:int) : int = failwith "unimplemented"
+let rec search_backward (ex:regexp) (str:string) (idx:int) : int = 
+  match string_partial_match ex str idx with
+  | true -> idx
+  | false -> if String.length str <= 0 then raise Not_found 
+    else search_forward ex str (idx-1)
 
 (* String replacement *)
 let global_replace (ex:regexp) (old_str:string) (new_string:string) : string =

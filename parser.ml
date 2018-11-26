@@ -84,10 +84,12 @@ let rec regexp_insensitive (regexp:regexp) : regexp =
 (* Makes a case-insensitive regexp *)
 let regexp_case_fold (str:string) : regexp = regexp str |> regexp_insensitive
 
+(* Makes an exact regexp of string *)
 let rec regexp_string (str:string) : regexp = 
   if str = "" then Empty
   else And (Char str.[0], regexp_string (String.sub str 1 (String.length str-1)))
 
+(* Makes a case-insensitive, exact regexp of string *)
 let regexp_string_case_fold (str:string) : regexp = 
   regexp_string str |> regexp_insensitive
 
@@ -122,9 +124,9 @@ let string_match (ex:regexp) (str:string) (idx:int) : bool =
   let truth, final_idx = match_helper ex str idx in 
   if String.length str = final_idx then truth else false
 
-let string_forward (ex:regexp) (str:string) (idx:int) :int = failwith "unimplemented"
+let string_forward (ex:regexp) (str:string) (idx:int) : int = failwith "unimplemented"
 
-let string_backward (ex:regexp) (str:string) (idx:int) :int = failwith "unimplemented"
+let string_backward (ex:regexp) (str:string) (idx:int) : int = failwith "unimplemented"
 
 let string_partial_match (ex:regexp) (str:string) (idx:int) : bool =
   fst(match_helper ex str idx)
@@ -153,7 +155,7 @@ let bounded_split (ex:regexp) (str:string) (num:int) : string list =
 let split_delim (ex:regexp) (str:string) : string list =
   failwith "unimplemented"
 
-let bounded_split (ex:regexp) (str:string) (num:int) : string list = 
+let bounded_split_delim (ex:regexp) (str:string) (num:int) : string list = 
   failwith "unimplemented"
 
 

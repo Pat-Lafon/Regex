@@ -17,9 +17,9 @@ val regexp_string_case_fold : string -> regexp
 
 val string_match : regexp -> string -> int -> bool
 
-val string_forward : regexp -> string -> int -> int
+val search_forward : regexp -> string -> int -> int
 
-val string_backward : regexp -> string -> int -> int
+val search_backward : regexp -> string -> int -> int
 
 val string_partial_match : regexp -> string -> int -> bool 
 

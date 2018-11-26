@@ -124,13 +124,12 @@ let string_match (ex:regexp) (str:string) (idx:int) : bool =
   let truth, final_idx = match_helper ex str idx in 
   if String.length str = final_idx then truth else false
 
-let string_forward (ex:regexp) (str:string) (idx:int) : int = failwith "unimplemented"
-
-let string_backward (ex:regexp) (str:string) (idx:int) : int = failwith "unimplemented"
-
 let string_partial_match (ex:regexp) (str:string) (idx:int) : bool =
   fst(match_helper ex str idx)
 
+let search_forward (ex:regexp) (str:string) (idx:int) : int = failwith "unimplemented"
+
+let search_backward (ex:regexp) (str:string) (idx:int) : int = failwith "unimplemented"
 
 (* String replacement *)
 let global_replace (ex:regexp) (old_str:string) (new_string:string) : string =
